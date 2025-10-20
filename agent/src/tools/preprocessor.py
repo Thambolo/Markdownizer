@@ -161,8 +161,10 @@ class PreprocessorTool:
     
     def __init__(self):
         """Initialize the preprocessor tool."""
-        self._placeholder_prefix = "___MARKDOWNIZER_CODE_BLOCK_"
-        self._placeholder_suffix = "___"
+        # Public placeholder format used by tests and reinsertion
+        # e.g. PLACEHOLDER_0, PLACEHOLDER_1
+        self._placeholder_prefix = "PLACEHOLDER_"
+        self._placeholder_suffix = ""
         self._block_counter = 0
     
     def extract_code_blocks(self, html: str) -> tuple[str, list[CodeBlock]]:
@@ -184,10 +186,10 @@ class PreprocessorTool:
         # Strategy 2: Framework-specific patterns
         blocks.extend(self._extract_framework_blocks(soup))
         
-        # Generate placeholders for all blocks
+        # Generate placeholders for all blocks (human-friendly token)
         for i, block in enumerate(blocks):
-            block.placeholder = f"[MARKDOWNIZER_CODE_BLOCK_{i}]"
-        
+            block.placeholder = f"{self._placeholder_prefix}{i}{self._placeholder_suffix}"
+
         return str(soup), blocks
     
     def _extract_semantic_html(self, soup: BeautifulSoup) -> list[CodeBlock]:
@@ -219,9 +221,11 @@ class PreprocessorTool:
                     )
                     blocks.append(block)
                     
-                    # Replace with HTML comment - trafilatura may preserve these
-                    placeholder_comment = soup.new_string(f" MARKDOWNIZER_CODE_BLOCK_{len(blocks)-1} ", Comment)
-                    pre_tag.replace_with(placeholder_comment)
+                    # Replace with simple placeholder token so downstream
+                    # markdown conversion preserves a distinct marker that
+                    # we can reinstate later. Tests expect `PLACEHOLDER_{i}`
+                    placeholder_token = soup.new_string(f"{self._placeholder_prefix}{len(blocks)-1}{self._placeholder_suffix}")
+                    pre_tag.replace_with(placeholder_token)
             else:
                 # <pre> without <code> (less common but valid)
                 content = self._extract_text_content(pre_tag)
@@ -233,8 +237,8 @@ class PreprocessorTool:
                     )
                     blocks.append(block)
                     
-                    placeholder_comment = soup.new_string(f" MARKDOWNIZER_CODE_BLOCK_{len(blocks)-1} ", Comment)
-                    pre_tag.replace_with(placeholder_comment)
+                    placeholder_token = soup.new_string(f"{self._placeholder_prefix}{len(blocks)-1}{self._placeholder_suffix}")
+                    pre_tag.replace_with(placeholder_token)
         
         # Standalone <code> tags (inline code, but sometimes used for blocks)
         for code_tag in soup.find_all('code'):
@@ -255,8 +259,8 @@ class PreprocessorTool:
                 )
                 blocks.append(block)
                 
-                placeholder_comment = soup.new_string(f" MARKDOWNIZER_CODE_BLOCK_{len(blocks)-1} ", Comment)
-                code_tag.replace_with(placeholder_comment)
+                placeholder_token = soup.new_string(f"{self._placeholder_prefix}{len(blocks)-1}{self._placeholder_suffix}")
+                code_tag.replace_with(placeholder_token)
         
         return blocks
     
@@ -289,8 +293,8 @@ class PreprocessorTool:
                             )
                             blocks.append(block)
                             
-                            placeholder_comment = soup.new_string(f" MARKDOWNIZER_CODE_BLOCK_{len(blocks)-1} ", Comment)
-                            element.replace_with(placeholder_comment)
+                            placeholder_token = soup.new_string(f"{self._placeholder_prefix}{len(blocks)-1}{self._placeholder_suffix}")
+                            element.replace_with(placeholder_token)
                 except Exception:
                     # Selector might not be valid for this HTML
                     continue
@@ -475,14 +479,13 @@ class PreprocessorTool:
             Markdown with code blocks reinserted
         """
         result = markdown
-        
+
         for i, block in enumerate(blocks):
-            # Find placeholder pattern
-            placeholder = f"[MARKDOWNIZER_CODE_BLOCK_{i}]"
-            
+            placeholder = f"{self._placeholder_prefix}{i}{self._placeholder_suffix}"
             markdown_block = block.to_markdown()
-            
+
+            # Replace all occurrences of the placeholder with the fenced code block
             if placeholder in result:
                 result = result.replace(placeholder, markdown_block)
-        
+
         return result

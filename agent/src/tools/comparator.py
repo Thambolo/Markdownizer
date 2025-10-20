@@ -83,24 +83,27 @@ class ComparatorTool:
         Returns:
             Overlap score between 0 and 1
         """
-        def get_trigrams(text: str) -> set[str]:
-            """Extract word trigrams from text."""
-            words = text.lower().split()
-            trigrams = set()
-            for i in range(len(words) - 2):
-                trigrams.add(" ".join(words[i : i + 3]))
-            return trigrams
+        def ngrams(text: str, n: int) -> set[str]:
+            words = re.findall(r"\w+", text.lower())
+            return set(" ".join(words[i : i + n]) for i in range(len(words) - n + 1))
 
-        trigrams_a = get_trigrams(text_a)
-        trigrams_b = get_trigrams(text_b)
+        # Build combined set of unigrams, bigrams and trigrams for sensitivity
+        def composite_ngrams(text: str) -> set[str]:
+            s = set()
+            s |= ngrams(text, 1)
+            s |= ngrams(text, 2)
+            s |= ngrams(text, 3)
+            return s
 
-        if not trigrams_a or not trigrams_b:
+        set_a = composite_ngrams(text_a)
+        set_b = composite_ngrams(text_b)
+
+        if not set_a or not set_b:
             return 0.0
 
-        intersection = len(trigrams_a & trigrams_b)
-        union = len(trigrams_a | trigrams_b)
-
-        return intersection / union if union > 0 else 0.0
+        inter = len(set_a & set_b)
+        uni = len(set_a | set_b)
+        return inter / uni if uni > 0 else 0.0
 
     def score_candidate(
         self, signals: dict[str, float | int], blocker_penalty: float = 0.0

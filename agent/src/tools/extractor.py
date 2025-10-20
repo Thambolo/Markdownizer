@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import trafilatura
@@ -96,6 +96,10 @@ class ExtractorTool:
             Markdown formatted string
         """
         try:
+            # Defensive: handle None or non-string input
+            if not html:
+                raise ValueError("No HTML content provided")
+
             # Clean HTML first
             soup = BeautifulSoup(html, "html.parser")
 
@@ -118,7 +122,7 @@ class ExtractorTool:
 
             # Add metadata header if requested
             if include_metadata:
-                timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+                timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
                 header = f"""# {title}
 
 **Source**: {url}  
@@ -133,13 +137,14 @@ class ExtractorTool:
 
         except Exception as e:
             # Fallback: return plain text in code block
+            safe_preview = "" if not isinstance(html, str) else (html[:1000] + "...")
             return f"""# {title}
 
 **Source**: {url}  
 **Error**: Failed to convert to Markdown: {str(e)}
 
 ```
-{html[:1000]}...
+{safe_preview}
 ```
 """
 
