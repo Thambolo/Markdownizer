@@ -1,3 +1,7 @@
+[![CI](https://github.com/Thambolo/Markdownizer/actions/workflows/ci.yml/badge.svg)](https://github.com/Thambolo/Markdownizer/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Thambolo/Markdownizer.svg?style=flat-square)](https://github.com/Thambolo/Markdownizer/commits/main)
+
 # Markdownizer
 
 > **AI-powered web content to Markdown conversion** — A professional tool for capturing and converting web pages to clean, structured Markdown format.
