@@ -111,7 +111,7 @@ jobs:
             "src/content.js"
             "src/options.html"
             "src/options.js"
-            "css/options.css"
+            "src/css/options.css"
           )
           
           for file in "${required_files[@]}"; do
@@ -181,12 +181,12 @@ jobs:
           cp .env.example .env
           echo "OPENAI_API_KEY=sk-test-dummy-key" >> .env
 
-      - name: Test agent startup
+      - name: Test agent imports
         working-directory: ./agent
         env:
           OPENAI_API_KEY: sk-test-dummy-key
         run: |
-          timeout 10s python -c "from app import agent; print('Agent initialized successfully')" || true
+          python -c "from app import fetcher, extractor, comparator; print('✓ Agent tools imported successfully')"
 
       - name: Validate protocol.json
         run: |

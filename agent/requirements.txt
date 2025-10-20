@@ -14,7 +14,7 @@ uvicorn[standard]==0.38.0
 httpx==0.28.1
 trafilatura==2.0.0
 beautifulsoup4==4.14.2
-lxml==6.0.2
+lxml>=5.3.0,<6.0.0
 lxml-html-clean==0.4.3
 
 # Markdown Conversion (SINGLE conversion point in agent)
