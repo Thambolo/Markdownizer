@@ -1,6 +1,14 @@
-[![CI](https://github.com/Thambolo/Markdownizer/actions/workflows/ci.yml/badge.svg)](https://github.com/Thambolo/Markdownizer/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/Thambolo/Markdownizer.svg?style=flat-square)](https://github.com/Thambolo/Markdownizer/commits/main)
+<p align="center">
+  <a href="https://github.com/Thambolo/Markdownizer/actions">
+    <img src="https://github.com/Thambolo/Markdownizer/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License: MIT" />
+  </a>
+  <a href="https://github.com/Thambolo/Markdownizer/commits/main">
+    <img src="https://img.shields.io/github/last-commit/Thambolo/Markdownizer.svg?style=flat-square" alt="GitHub last commit" />
+  </a>
+</p>
 
 # Markdownizer
 
