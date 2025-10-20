@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdownizer Options</title>
+  <link rel="stylesheet" href="css/options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚙️ Markdownizer Settings</h1>
+      <p>Configure the local agent connection and behavior</p>
+    </header>
+
+    <main>
+      <section class="settings-section">
+        <h2>Agent Configuration</h2>
+        
+        <div class="setting-item">
+          <label for="agent-url">
+            <strong>Agent URL</strong>
+            <span class="description">URL of the local Markdownizer agent service</span>
+          </label>
+          <input 
+            type="text" 
+            id="agent-url" 
+            placeholder="http://127.0.0.1:5050"
+            value="http://127.0.0.1:5050"
+          >
+        </div>
+
+        <div class="setting-item">
+          <label for="auto-download">
+            <input type="checkbox" id="auto-download">
+            <strong>Auto-download backup HTML</strong>
+            <span class="description">Save raw HTML when agent is offline</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Connection Status</h2>
+        
+        <div class="status-display">
+          <div class="status-indicator" id="status-indicator"></div>
+          <div>
+            <div id="status-text" class="status-text">Checking...</div>
+            <div id="status-details" class="status-details"></div>
+          </div>
+        </div>
+
+        <button id="test-connection" class="btn-secondary">Test Connection</button>
+      </section>
+
+      <section class="settings-section">
+        <h2>About</h2>
+        <p class="about-text">
+          <strong>Markdownizer</strong> converts web pages to clean Markdown format using an AI-powered local agent.
+          The extension captures page content (including authenticated views), and the agent intelligently 
+          compares multiple extraction methods to produce the best Markdown output.
+        </p>
+        <p class="about-text">
+          <strong>Version:</strong> 1.0.0<br>
+          <strong>Agent Required:</strong> Python 3.11+<br>
+          <strong>Privacy:</strong> All processing happens locally—no data sent to external servers.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <button id="save-settings" class="btn-primary">Save Settings</button>
+      <div id="save-status" class="save-status"></div>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

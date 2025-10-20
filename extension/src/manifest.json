@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Markdownizer",
+  "version": "1.0.0",
+  "description": "Convert web pages to clean Markdown using AI-powered local agent service",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "action": {
+    "default_title": "Capture to Markdown"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "description": "Message protocol contract between Markdownizer extension and agent",
+  "endpoints": {
+    "health": {
+      "method": "GET",
+      "path": "/health",
+      "description": "Health check endpoint",
+      "response": {
+        "status": "string (ok | degraded | error)",
+        "version": "string",
+        "timestamp": "string (ISO 8601)"
+      }
+    },
+    "ingest": {
+      "method": "POST",
+      "path": "/ingest",
+      "description": "Ingest content from extension and convert to Markdown",
+      "request": {
+        "url": "string (HttpUrl)",
+        "title": "string",
+        "html_readability": "string (Clean HTML from Readability.js)",
+        "text_readability": "string (Plain text from Readability.js)",
+        "meta": {
+          "captured_at": "string (ISO 8601)",
+          "stats": {
+            "char_count": "number",
+            "headings": "number",
+            "lists": "number"
+          },
+          "iframe_info": [
+            {
+              "src": "string",
+              "sameOrigin": "boolean"
+            }
+          ]
+        }
+      },
+      "response_success": {
+        "ok": true,
+        "chosen": "string (readability | trafilatura)",
+        "title": "string",
+        "url": "string",
+        "markdown": "string (Converted Markdown content)",
+        "diagnostics": {
+          "score_readability": "number (0.0-1.0)",
+          "score_trafilatura": "number (0.0-1.0)",
+          "signals": {
+            "readability": {
+              "len": "number",
+              "density": "number",
+              "overlap": "number"
+            },
+            "trafilatura": {
+              "len": "number",
+              "density": "number",
+              "overlap": "number"
+            }
+          }
+        }
+      },
+      "response_error": {
+        "ok": false,
+        "code": "string (login-required | paywall | captcha | cross-origin-iframe | content-too-thin | csp-blocked | fetch-failed | extraction-failed)",
+        "message": "string (Human-readable error message with next steps)"
+      }
+    }
+  },
+  "error_codes": {
+    "login-required": "Page requires authentication to access content",
+    "paywall": "Subscription or payment wall detected",
+    "captcha": "CAPTCHA challenge is present",
+    "cross-origin-iframe": "Main content is in inaccessible cross-origin iframe",
+    "content-too-thin": "Insufficient content extracted from page",
+    "csp-blocked": "Content Security Policy blocked extension injection",
+    "fetch-failed": "HTTP request to fetch page failed",
+    "extraction-failed": "Content extraction process failed"
+  },
+  "notes": {
+    "comparison_algorithm": "score = 0.35*len + 0.20*density + 0.20*overlap + 0.10*structure + 0.10*freshness + 0.05*links - blocker_penalty",
+    "tie_breaking": "If |score_A - score_B| < 0.05, prefer readability (user-visible content)",
+    "blocker_detection": "Playwright probe is headless-only, 30s timeout, no authentication",
+    "markdown_conversion": "Single conversion point using markdownify in agent",
+    "link_normalization": "Converts relative to absolute, strips UTM tracking parameters",
+    "privacy": "All processing happens locally, no external server communication"
+  }
+}

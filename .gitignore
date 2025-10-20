@@ -205,3 +205,141 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ============================================
+# Markdownizer Project Specific
+# ============================================
+
+# Environment variables (contains API keys)
+.env
+.env.local
+.env.*.local
+*.env
+
+# ConnectOnion data & config
+.co/local/
+.co/logs/
+*.co.lock
+
+# Agent behavior history & cache
+agent/.co/agents/*/behavior.json
+agent/.co/cache/
+
+# Playwright browsers & cache
+agent/.playwright/
+ms-playwright/
+
+# Screenshots & test outputs
+*.png
+*.jpg
+*.jpeg
+!extension/icons/*.png
+screenshots/
+test_outputs/
+
+# Generated Markdown files (outputs)
+*.md
+!README.md
+!LICENSE.md
+!CONTRIBUTING.md
+!docs/**/*.md
+!agent/src/prompts/*.md
+
+# FastAPI & Uvicorn
+*.pid
+*.sock
+fastapi-cache/
+
+# Extension builds & packaging
+extension/dist/
+extension/build/
+extension/*.zip
+extension/*.crx
+extension/*.pem
+extension/web-ext-artifacts/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE specific (additional)
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Logs & diagnostics
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+agent/logs/
+agent/*.log
+
+# Python virtual environments (if not in standard location)
+agent/venv/
+agent/.venv/
+agent/env/
+agent/ENV/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test-results/
+test_*.html
+test_*.json
+
+# Database files (if using SQLite for caching)
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files from editors
+*~
+*.orig
+.*.swp
+.*.swo
+
+# Node modules (if any JS tooling is added later)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Python package builds
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+
+# Debug and diagnostic files (agent/)
+agent/debug_*.py
+agent/check_*.py
+agent/diagnostic_*.py
+agent/inspect_*.py
+agent/verify_*.py
+agent/find_*.py
+agent/force_*.py
+agent/test_*.py
+agent/*_output.md
+agent/final_markdown.md
+agent/processed_*.html
+agent/cleanup.ps1
