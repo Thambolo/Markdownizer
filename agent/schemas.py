@@ -37,12 +37,16 @@ class CaptureMeta(BaseModel):
 
 
 class IngestRequest(BaseModel):
-    """Request payload from browser extension."""
+    """Request payload from browser extension.
+    
+    The extension sends its best extraction using priority:
+    Schema.org > Semantic HTML > Readability.js fallback.
+    """
 
     url: HttpUrl
     title: str
-    html_readability: str
-    text_readability: str
+    html_extension: str  # Best extraction HTML from extension
+    text_extension: str  # Best extraction text from extension
     meta: CaptureMeta
 
 
@@ -65,7 +69,7 @@ class ContentSignals(BaseModel):
 class CandidateScore(BaseModel):
     """Score and signals for a content candidate."""
 
-    source: Literal["readability", "trafilatura"]
+    source: Literal["extension", "trafilatura"]
     score: float
     signals: ContentSignals
 
@@ -97,7 +101,7 @@ class DiagnosticSignals(BaseModel):
 class Diagnostics(BaseModel):
     """Diagnostic information about the comparison."""
 
-    score_readability: float
+    score_extension: float
     score_trafilatura: float
     signals: dict[str, DiagnosticSignals]
     redirect_detected: bool = False
@@ -109,7 +113,7 @@ class SuccessResponse(BaseModel):
     """Success response with Markdown content."""
 
     ok: Literal[True] = True
-    chosen: Literal["readability", "trafilatura"]
+    chosen: Literal["extension", "trafilatura"]
     title: str
     url: str
     markdown: str

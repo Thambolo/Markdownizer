@@ -59,12 +59,12 @@ async def ingest_content(request: IngestRequest):
     Ingest content from browser extension and convert to Markdown.
 
     This endpoint orchestrates the full pipeline:
-    1. Receive extension's Readability HTML
+    1. Receive extension's captured HTML (Schema.org > Semantic > Readability)
     2. Fetch URL independently
     3. Extract with trafilatura
     4. Optionally probe for blockers
-    5. Compare both versions
-    6. Convert to Markdown
+    5. Compare both versions (extension vs agent)
+    6. Convert chosen version to Markdown with code block handling
     7. Return result or error
     """
     start_time = datetime.utcnow()
@@ -84,25 +84,26 @@ async def ingest_content(request: IngestRequest):
 
         if not fetch_result["success"]:
             logger.warning(f"Fetch failed: {fetch_result['error']}")
-            # Use extension's content as fallback (no code preservation possible)
+            logger.info("Using extension's captured content as fallback")
+            # Use extension's content as fallback
             markdown_final = extractor.convert_to_markdown(
-                request.html_readability,
+                request.html_extension,
                 request.title,
                 url,
             )
             markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
             
             return SuccessResponse(
-                chosen="readability",
+                chosen="extension",
                 title=request.title,
                 url=url,
                 markdown=markdown_final,
                 diagnostics={
-                    "score_readability": 1.0,
+                    "score_extension": 1.0,
                     "score_trafilatura": 0.0,
                     "signals": {
-                        "readability": {
-                            "len": len(request.text_readability),
+                        "extension": {
+                            "len": len(request.text_extension),
                             "density": 0.0,
                             "overlap": 0.0,
                         },
@@ -121,27 +122,27 @@ async def ingest_content(request: IngestRequest):
             logger.warning(
                 f"Redirect detected: {fetch_result['original_url']} → {fetch_result['final_url']}"
             )
-            logger.info("Using extension's Readability capture (agent can't verify content)")
+            logger.info("Using extension's captured content (agent can't verify redirected page)")
             
             # Convert extension's HTML to Markdown
             markdown_final = extractor.convert_to_markdown(
-                request.html_readability,
+                request.html_extension,
                 request.title,
                 url,
             )
             markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
             
             return SuccessResponse(
-                chosen="readability",
+                chosen="extension",
                 title=request.title,
                 url=url,
                 markdown=markdown_final,
                 diagnostics={
-                    "score_readability": 1.0,
+                    "score_extension": 1.0,
                     "score_trafilatura": 0.0,
                     "signals": {
-                        "readability": {
-                            "len": len(request.text_readability),
+                        "extension": {
+                            "len": len(request.text_extension),
                             "density": 0.0,
                             "overlap": 0.0,
                         },
@@ -173,25 +174,26 @@ async def ingest_content(request: IngestRequest):
 
         if not extraction["success"]:
             logger.warning(f"Extraction failed: {extraction['error']}")
+            logger.info("Using extension's captured content as fallback")
             # Use extension's content
             markdown_final = extractor.convert_to_markdown(
-                request.html_readability,
+                request.html_extension,
                 request.title,
                 url,
             )
             markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
             
             return SuccessResponse(
-                chosen="readability",
+                chosen="extension",
                 title=request.title,
                 url=url,
                 markdown=markdown_final,
                 diagnostics={
-                    "score_readability": 1.0,
+                    "score_extension": 1.0,
                     "score_trafilatura": 0.0,
                     "signals": {
-                        "readability": {
-                            "len": len(request.text_readability),
+                        "extension": {
+                            "len": len(request.text_extension),
                             "density": 0.0,
                             "overlap": 0.0,
                         },
@@ -230,27 +232,27 @@ async def ingest_content(request: IngestRequest):
                     "paywall" if blocker_flags.get("paywall") else
                     "CAPTCHA"
                 )
-                logger.warning(f"{blocker_type} detected, using extension's capture")
+                logger.warning(f"{blocker_type} detected, using extension's captured content")
                 
                 # Convert extension's HTML to Markdown
                 markdown_final = extractor.convert_to_markdown(
-                    request.html_readability,
+                    request.html_extension,
                     request.title,
                     url,
                 )
                 markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
                 
                 return SuccessResponse(
-                    chosen="readability",
+                    chosen="extension",
                     title=request.title,
                     url=url,
                     markdown=markdown_final,
                     diagnostics={
-                        "score_readability": 1.0,
+                        "score_extension": 1.0,
                         "score_trafilatura": 0.0,
                         "signals": {
-                            "readability": {
-                                "len": len(request.text_readability),
+                            "extension": {
+                                "len": len(request.text_extension),
                                 "density": 0.0,
                                 "overlap": 0.0,
                             },
@@ -266,8 +268,8 @@ async def ingest_content(request: IngestRequest):
         # Step 4: Compare both versions
         logger.info("Comparing extension vs agent extraction...")
         comparison = comparator.compare_and_decide(
-            readability_text=request.text_readability,
-            readability_html=request.html_readability,
+            extension_text=request.text_extension,
+            extension_html=request.html_extension,
             trafilatura_text=extraction["text"],
             trafilatura_html=extraction["html"],
             title=request.title,
@@ -282,10 +284,10 @@ async def ingest_content(request: IngestRequest):
         #     html_with_code = preprocessor.inject_code_into_html(extraction["html"], code_blocks)
         # else:
         #     # Also inject into readability HTML
-        #     html_with_code = preprocessor.inject_code_into_html(request.html_readability, code_blocks)
+        #     html_with_code = preprocessor.inject_code_into_html(request.html_extension, code_blocks)
         
         # No code block injection - use original HTML
-        html_with_code = extraction["html"] if comparison["chosen"] == "trafilatura" else request.html_readability
+        html_with_code = extraction["html"] if comparison["chosen"] == "trafilatura" else request.html_extension
         
         # Step 6: Convert chosen content to Markdown
         markdown = extractor.convert_to_markdown(
@@ -305,8 +307,9 @@ async def ingest_content(request: IngestRequest):
         chosen = comparison["chosen"]
         duration = (datetime.utcnow() - start_time).total_seconds()
         logger.info(
-            f"Conversion complete: {chosen} chosen, {duration:.2f}s, "
-            f"score_diff={comparison['score_diff']}"
+            f"Conversion complete: {chosen} chosen "
+            f"(extension: {comparison['score_extension']:.3f}, trafilatura: {comparison['score_trafilatura']:.3f}), "
+            f"{duration:.2f}s"
         )
 
         # Step 8: Return success response
@@ -316,10 +319,10 @@ async def ingest_content(request: IngestRequest):
             url=url,
             markdown=markdown,
             diagnostics={
-                "score_readability": comparison["score_readability"],
+                "score_extension": comparison["score_extension"],
                 "score_trafilatura": comparison["score_trafilatura"],
                 "signals": {
-                    "readability": comparison["signals_readability"],
+                    "extension": comparison["signals_extension"],
                     "trafilatura": comparison["signals_trafilatura"],
                 },
             },

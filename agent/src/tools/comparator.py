@@ -133,8 +133,8 @@ class ComparatorTool:
 
     def compare_and_decide(
         self,
-        readability_text: str,
-        readability_html: str,
+        extension_text: str,
+        extension_html: str,
         trafilatura_text: str,
         trafilatura_html: str,
         title: str,
@@ -144,8 +144,8 @@ class ComparatorTool:
         Compare two candidates and decide which is better.
 
         Args:
-            readability_text: Text from extension's Readability
-            readability_html: HTML from extension's Readability
+            extension_text: Text from extension's capture (Schema.org/Semantic/Readability)
+            extension_html: HTML from extension's capture (Schema.org/Semantic/Readability)
             trafilatura_text: Text from agent's trafilatura
             trafilatura_html: HTML from agent's trafilatura
             title: Page title
@@ -157,14 +157,14 @@ class ComparatorTool:
         blocker_flags = blocker_flags or {}
 
         # Compute signals for both
-        signals_r = self.compute_signals(readability_text, readability_html, title)
+        signals_ext = self.compute_signals(extension_text, extension_html, title)
         signals_t = self.compute_signals(trafilatura_text, trafilatura_html, title)
 
         # Compute semantic overlap
-        overlap = self.semantic_overlap(readability_text, trafilatura_text)
+        overlap = self.semantic_overlap(extension_text, trafilatura_text)
 
         # Add overlap to signals
-        signals_r["overlap"] = overlap
+        signals_ext["overlap"] = overlap
         signals_t["overlap"] = overlap
 
         # Calculate blocker penalty for trafilatura
@@ -173,25 +173,25 @@ class ComparatorTool:
             blocker_penalty = 0.3  # 30% penalty for blockers
 
         # Score both candidates
-        score_r = self.score_candidate(signals_r, blocker_penalty=0.0)
+        score_ext = self.score_candidate(signals_ext, blocker_penalty=0.0)
         score_t = self.score_candidate(signals_t, blocker_penalty=blocker_penalty)
 
-        # Decide: if difference < 5%, prefer Readability (user-visible)
-        score_diff = abs(score_r - score_t)
+        # Decide: if difference < 5%, prefer extension (user-visible)
+        score_diff = abs(score_ext - score_t)
         if score_diff < 0.05:
-            chosen = "readability"
+            chosen = "extension"
         else:
-            chosen = "readability" if score_r > score_t else "trafilatura"
+            chosen = "extension" if score_ext > score_t else "trafilatura"
 
         return {
             "chosen": chosen,
-            "score_readability": round(score_r, 3),
+            "score_extension": round(score_ext, 3),
             "score_trafilatura": round(score_t, 3),
             "score_diff": round(score_diff, 3),
             "overlap": round(overlap, 3),
-            "signals_readability": {
-                "len": signals_r["len_text"],
-                "density": round(signals_r["density"], 3),
+            "signals_extension": {
+                "len": signals_ext["len_text"],
+                "density": round(signals_ext["density"], 3),
                 "overlap": round(overlap, 3),
             },
             "signals_trafilatura": {

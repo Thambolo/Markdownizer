@@ -158,8 +158,6 @@ class ExtractorTool:
                     replacement = '```\n'
                 markdown = re.sub(pattern, replacement, markdown)
             
-            self._code_lang_map = code_lang_map  # Store for debugging
-
             # Add metadata header if requested
             if include_metadata:
                 timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")

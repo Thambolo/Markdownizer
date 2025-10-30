@@ -91,16 +91,16 @@ def test_compare_and_decide_prefer_readability_on_tie(comparator):
     html = "<article>" + "<p>Sample paragraph</p>" * 20 + "</article>"
     
     decision = comparator.compare_and_decide(
-        readability_text=text,
-        readability_html=html,
+        extension_text=text,
+        extension_html=html,
         trafilatura_text=text,  # Same content
         trafilatura_html=html,
         title="Test Article",
         blocker_flags={}
     )
     
-    assert decision["chosen"] == "readability"
-    assert "score_readability" in decision
+    assert decision["chosen"] == "extension"
+    assert "score_extension" in decision
     assert "score_trafilatura" in decision
     assert decision["score_diff"] < 0.05
 
@@ -118,16 +118,16 @@ def test_compare_and_decide_blocker_penalty(comparator):
     }
     
     decision = comparator.compare_and_decide(
-        readability_text=readability_text,
-        readability_html=html,
+        extension_text=readability_text,
+        extension_html=html,
         trafilatura_text=trafilatura_text,
         trafilatura_html=html,
         title="Test Article",
         blocker_flags=blocker_flags
     )
     
-    # With blocker penalty, readability should be chosen
-    assert decision["chosen"] == "readability"
+    # With blocker penalty, extension should be chosen
+    assert decision["chosen"] == "extension"
     assert decision["blocker_penalty"] > 0
 
 
@@ -140,8 +140,8 @@ def test_compare_and_decide_better_content(comparator):
     trafilatura_html = "<article>" + "<p>Detailed paragraph</p>" * 50 + "</article>"
     
     decision = comparator.compare_and_decide(
-        readability_text=readability_text,
-        readability_html=readability_html,
+        extension_text=readability_text,
+        extension_html=readability_html,
         trafilatura_text=trafilatura_text,
         trafilatura_html=trafilatura_html,
         title="Test Article",
@@ -150,7 +150,7 @@ def test_compare_and_decide_better_content(comparator):
     
     # Trafilatura has much better content
     assert decision["chosen"] == "trafilatura"
-    assert decision["score_trafilatura"] > decision["score_readability"]
+    assert decision["score_trafilatura"] > decision["score_extension"]
 
 
 def test_signals_structure_richness(comparator):
