@@ -18,7 +18,7 @@ from schemas import (
     ErrorResponse,
     HealthResponse,
 )
-from app import agent, fetcher, extractor, comparator, playwright_probe, normalizer, preprocessor
+from app import agent, fetcher, extractor, comparator, playwright_probe, normalizer
 
 # Configure logging
 logging.basicConfig(
@@ -90,6 +90,7 @@ async def ingest_content(request: IngestRequest):
                 request.title,
                 url,
             )
+            markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
             
             return SuccessResponse(
                 chosen="readability",
@@ -128,6 +129,7 @@ async def ingest_content(request: IngestRequest):
                 request.title,
                 url,
             )
+            markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
             
             return SuccessResponse(
                 chosen="readability",
@@ -177,6 +179,7 @@ async def ingest_content(request: IngestRequest):
                 request.title,
                 url,
             )
+            markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
             
             return SuccessResponse(
                 chosen="readability",
@@ -235,6 +238,7 @@ async def ingest_content(request: IngestRequest):
                     request.title,
                     url,
                 )
+                markdown_final = extractor.fix_fragmented_code_blocks(markdown_final)
                 
                 return SuccessResponse(
                     chosen="readability",
@@ -290,7 +294,10 @@ async def ingest_content(request: IngestRequest):
             url,
         )
 
-        # Step 7: Normalize links and clean
+        # Step 7: Fix fragmented code blocks (line numbers, broken formatting)
+        markdown = extractor.fix_fragmented_code_blocks(markdown)
+
+        # Step 8: Normalize links and clean
         markdown = normalizer.normalize_links(markdown, url)
         markdown = extractor.clean_markdown(markdown)
 

@@ -13,7 +13,6 @@ from src.tools.extractor import ExtractorTool
 from src.tools.comparator import ComparatorTool
 from src.tools.playwright_probe import PlaywrightProbeTool
 from src.tools.normalizer import NormalizerTool
-from src.tools.preprocessor import PreprocessorTool
 
 
 # Initialize tool instances globally (ConnectOnion best practice)
@@ -22,7 +21,6 @@ extractor = ExtractorTool()
 comparator = ComparatorTool()
 playwright_probe = PlaywrightProbeTool()
 normalizer = NormalizerTool()
-preprocessor = PreprocessorTool()
 
 
 def create_agent() -> Agent:
@@ -43,11 +41,10 @@ def create_agent() -> Agent:
     # Use global tool instances
     tools = [
         fetcher,              # Auto-discovers: fetch_url, close
-        extractor,            # Auto-discovers: extract_with_trafilatura, convert_to_markdown, clean_markdown
+        extractor,            # Auto-discovers: extract_with_trafilatura, convert_to_markdown, clean_markdown, fix_fragmented_code_blocks
         comparator,           # Auto-discovers: compute_signals, semantic_overlap, score_candidate, compare_and_decide
         playwright_probe,     # Auto-discovers: detect_blockers, close
         normalizer,           # Auto-discovers: strip_tracking, normalize_links, redact_tokens
-        # preprocessor,         # Auto-discovers: extract_code_blocks, reinsert_code_blocks
     ]
     
     agent_instance = None
