@@ -1,10 +1,8 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  push: {}
+  pull_request: {}
   workflow_dispatch:
 
 jobs:
@@ -16,85 +14,43 @@ jobs:
         python-version: ['3.11', '3.12']
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         working-directory: ./agent
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Install Playwright browsers
-        working-directory: ./agent
-        run: |
-          playwright install chromium --with-deps
+          pip install pytest fastapi[all] httpx
 
       - name: Run tests with pytest
         working-directory: ./agent
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-dummy-key-for-ci' }}
         run: |
-          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+          pytest -q
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./agent/coverage.xml
-          flags: agent
-          name: agent-coverage
-        continue-on-error: true
-
-  lint:
-    name: Lint Python Code
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install linting tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff black isort mypy
-
-      - name: Run ruff
-        working-directory: ./agent
-        run: |
-          ruff check . --output-format=github
-        continue-on-error: true
-
-      - name: Check code formatting with black
-        working-directory: ./agent
-        run: |
-          black --check .
-        continue-on-error: true
-
-      - name: Check import sorting with isort
-        working-directory: ./agent
-        run: |
-          isort --check-only .
-        continue-on-error: true
+  # Linting checks intentionally removed from CI (kept for local pre-commit)
 
   extension-check:
     name: Check Browser Extension
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Validate manifest.json
         run: |
@@ -113,14 +69,14 @@ jobs:
             "src/options.js"
             "src/css/options.css"
           )
-          
+
           for file in "${required_files[@]}"; do
             if [ ! -f "$file" ]; then
               echo "✗ Missing required file: $file"
               exit 1
             fi
           done
-          
+
           echo "✓ All required extension files present"
 
       - name: Check JavaScript syntax
@@ -136,8 +92,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -157,17 +112,15 @@ jobs:
   integration:
     name: Integration Test
     runs-on: ubuntu-latest
-    needs: [test, lint]
+    needs: [test]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         working-directory: ./agent
@@ -175,10 +128,35 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Restore Playwright browser cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ms-playwright
+          # Use the .playwright-version file so Playwright cache invalidates when its version changes
+          key: ${{ runner.os }}-playwright-${{ hashFiles('.playwright-version') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          # Project has no package.json; use .playwright-version as the cache anchor for JS-related caches
+          key: ${{ runner.os }}-npm-${{ hashFiles('.playwright-version') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install Playwright browsers
+        working-directory: ./agent
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/ms-playwright
+        run: |
+          playwright install chromium --with-deps
+
       - name: Create test .env file
         working-directory: ./agent
         run: |
-          cp .env.example .env
+          cp .env.example .env || true
           echo "OPENAI_API_KEY=sk-test-dummy-key" >> .env
 
       - name: Test agent imports
@@ -196,7 +174,7 @@ jobs:
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [test, lint, extension-check, integration]
+    needs: [test, extension-check, integration]
     if: always()
 
     steps:
@@ -204,9 +182,7 @@ jobs:
         run: |
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Python tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Code linting: ${{ needs.lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Code linting: skipped (not run in CI)" >> $GITHUB_STEP_SUMMARY
           echo "- Extension check: ${{ needs.extension-check.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Integration test: ${{ needs.integration.result }}" >> $GITHUB_STEP_SUMMARY
