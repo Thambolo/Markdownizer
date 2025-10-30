@@ -47,7 +47,7 @@ def create_agent() -> Agent:
         comparator,           # Auto-discovers: compute_signals, semantic_overlap, score_candidate, compare_and_decide
         playwright_probe,     # Auto-discovers: detect_blockers, close
         normalizer,           # Auto-discovers: strip_tracking, normalize_links, redact_tokens
-        preprocessor,         # Auto-discovers: extract_code_blocks, reinsert_code_blocks
+        # preprocessor,         # Auto-discovers: extract_code_blocks, reinsert_code_blocks
     ]
     
     agent_instance = None

@@ -14,42 +14,55 @@ chrome.action.onClicked.addListener(async (tab) => {
     const { agentUrl = DEFAULT_AGENT_URL } = await chrome.storage.sync.get('agentUrl');
 
     try {
-        // Inject Readability library
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['vendor/readability.js']
-        });
-
-        // Inject content script
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['content.js']
-        });
-
-        // Send message to content script to start capture
+        // Try sending message first (scripts might already be loaded)
         chrome.tabs.sendMessage(
             tab.id,
             { action: 'startCapture', agentUrl },
-            (response) => {
+            async (response) => {
+                // If no response, content script isn't loaded yet - inject it
                 if (chrome.runtime.lastError) {
-                    showNotification('Error', chrome.runtime.lastError.message, 'error');
+                    console.log('Content script not loaded, injecting now...');
+
+                    try {
+                        // Inject all scripts in order
+                        await chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            files: [
+                                'vendor/readability.js',
+                                'utils.js',
+                                'expander.js',
+                                'extractors.js',
+                                'payload.js',
+                                'content.js'
+                            ]
+                        });
+
+                        // Now send the message
+                        chrome.tabs.sendMessage(
+                            tab.id,
+                            { action: 'startCapture', agentUrl }
+                        );
+                    } catch (injectError) {
+                        console.error('Injection failed:', injectError);
+
+                        // Check if CSP is blocking
+                        if (injectError.message.includes('Content Security Policy')) {
+                            showNotification(
+                                'CSP Blocked',
+                                'This page blocks extension scripts. Try opening in a new tab.',
+                                'warning'
+                            );
+                        } else {
+                            showNotification('Error', injectError.message, 'error');
+                        }
+                    }
                 }
             }
         );
 
     } catch (error) {
-        console.error('Injection failed:', error);
-
-        // Check if CSP is blocking
-        if (error.message.includes('Content Security Policy')) {
-            showNotification(
-                'CSP Blocked',
-                'This page blocks extension scripts. Try opening in a new tab.',
-                'warning'
-            );
-        } else {
-            showNotification('Error', error.message, 'error');
-        }
+        console.error('Error:', error);
+        showNotification('Error', error.message, 'error');
     }
 });
 

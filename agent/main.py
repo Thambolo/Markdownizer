@@ -156,9 +156,11 @@ async def ingest_content(request: IngestRequest):
             )
 
         # Step 2: Extract code blocks from RAW HTML (before cleanup)
-        logger.info("Extracting code blocks from raw HTML...")
-        _, code_blocks = preprocessor.extract_code_blocks(fetch_result["html"])
-        logger.info(f"Extracted {len(code_blocks)} code blocks")
+        # TEMPORARILY DISABLED FOR TESTING
+        # logger.info("Extracting code blocks from raw HTML...")
+        # _, code_blocks = preprocessor.extract_code_blocks(fetch_result["html"])
+        # logger.info(f"Extracted {len(code_blocks)} code blocks")
+        code_blocks = []  # Empty list - no code block preprocessing
         
         # Step 3: Extract with trafilatura
         logger.info("Extracting content with trafilatura...")
@@ -269,13 +271,17 @@ async def ingest_content(request: IngestRequest):
         )
 
         # Step 5: Inject code blocks back into HTML BEFORE Markdown conversion
-        logger.info(f"Injecting {len(code_blocks)} code blocks into HTML...")
-        # Inject into whichever HTML was chosen
-        if comparison["chosen"] == "trafilatura":
-            html_with_code = preprocessor.inject_code_into_html(extraction["html"], code_blocks)
-        else:
-            # Also inject into readability HTML
-            html_with_code = preprocessor.inject_code_into_html(request.html_readability, code_blocks)
+        # TEMPORARILY DISABLED FOR TESTING
+        # logger.info(f"Injecting {len(code_blocks)} code blocks into HTML...")
+        # # Inject into whichever HTML was chosen
+        # if comparison["chosen"] == "trafilatura":
+        #     html_with_code = preprocessor.inject_code_into_html(extraction["html"], code_blocks)
+        # else:
+        #     # Also inject into readability HTML
+        #     html_with_code = preprocessor.inject_code_into_html(request.html_readability, code_blocks)
+        
+        # No code block injection - use original HTML
+        html_with_code = extraction["html"] if comparison["chosen"] == "trafilatura" else request.html_readability
         
         # Step 6: Convert chosen content to Markdown
         markdown = extractor.convert_to_markdown(
