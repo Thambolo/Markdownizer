@@ -79,7 +79,7 @@ uvicorn main:app --reload --port 5050
 - Code block handling and preprocessing: `docs/preprocessor.md`
 - Architecture & flow: `docs/architecture.md`
 - Troubleshooting and FAQ: `docs/FAQ.md`
-- Tests: `TESTS.md`
+- Tests: `docs/TESTS.md`
 
 ## Minimal troubleshooting
 
