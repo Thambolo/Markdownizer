@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 
 from fastapi import FastAPI, HTTPException
@@ -67,7 +67,7 @@ async def ingest_content(request: IngestRequest):
     6. Convert chosen version to Markdown with code block handling
     7. Return result or error
     """
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     url = str(request.url)
     
     # Redact URL for logging
@@ -285,7 +285,7 @@ async def ingest_content(request: IngestRequest):
 
         # Calculate duration
         chosen = comparison["chosen"]
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         logger.info(
             f"Conversion complete: {chosen} chosen "
             f"(extension: {comparison['score_extension']:.3f}, trafilatura: {comparison['score_trafilatura']:.3f}), "
