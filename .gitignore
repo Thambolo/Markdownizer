@@ -233,7 +233,7 @@ ms-playwright/
 *.png
 *.jpg
 *.jpeg
-!extension/icons/*.png
+!extension/src/icons/*.png
 screenshots/
 test_outputs/
 
