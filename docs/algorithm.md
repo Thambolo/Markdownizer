@@ -1,6 +1,6 @@
 # Decision Algorithm & Scoring
 
-This document contains the details of the scoring formula used to compare the browser-captured Readability extraction (A) vs the agent-side trafilatura extraction (B).
+This document contains the details of the scoring formula used to compare the browser-captured extension extraction (A) vs the agent-side trafilatura extraction (B).
 
 ## Scoring signals
 - length (normalized)
@@ -20,11 +20,19 @@ Tie-breaking rule: if |score_A - score_B| < 0.05 prefer the browser-captured Rea
 - If trafilatura extracts < 500 characters, an optional Playwright probe runs to detect login walls, paywalls, or CAPTCHAs. If blockers are detected, prefer A and add diagnostics.
 
 --
-*Moved from README: scoring formula and decision rules.*
+## Extension extraction methods
+
+The browser extension attempts three extraction strategies in priority order:
+
+1. **Schema.org JSON-LD** (85-90% reliability) - Structured data embedded in pages
+2. **Semantic HTML5** (75-80% reliability) - Tags like `<article>`, `<main>`, `<section>`
+3. **Readability.js** (100% coverage) - Mozilla's universal DOM cleaning algorithm
+
+The best extraction is sent as "A" to the agent for comparison.
 
 ## Decision algorithm (detailed)
 
-When no redirect is detected, the agent computes a weighted score for each candidate (A = Readability, B = trafilatura) using the signals listed above. The formula is:
+When no redirect is detected, the agent computes a weighted score for each candidate (A = extension's best extraction, B = trafilatura) using the signals listed above. The formula is:
 
 ```
 score = (
@@ -38,7 +46,7 @@ score = (
 ```
 
 Rules:
-- If |score_A - score_B| < 0.05 → prefer the browser-captured Readability (A).
+- If |score_A - score_B| < 0.05 → prefer the browser-captured extension extraction (A).
 - If both are long but differ greatly, prefer the browser capture and warn in diagnostics.
 
 Blocker detection:

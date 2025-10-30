@@ -29,8 +29,8 @@ function buildPayload(article) {
     return {
         url: window.location.href,
         title: article.title || document.title,
-        html_readability: content,
-        text_readability: text,
+        html_extension: content,
+        text_extension: text,
         meta: {
             captured_at: new Date().toISOString(),
             stats: stats,
@@ -68,8 +68,8 @@ function buildEnhancedPayload(extractions) {
     return {
         url: window.location.href,
         title: primary.title || document.title,
-        html_readability: content,
-        text_readability: text,
+        html_extension: content,
+        text_extension: text,
         meta: {
             captured_at: new Date().toISOString(),
             stats: stats,

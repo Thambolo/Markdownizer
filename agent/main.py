@@ -74,9 +74,6 @@ async def ingest_content(request: IngestRequest):
     safe_url = normalizer.redact_tokens(url)
     logger.info(f"Ingest request: {safe_url}")
 
-    # Initialize code_blocks (will be populated if fetch succeeds)
-    code_blocks = []
-
     try:
         # Step 1: Fetch the URL independently to get RAW HTML
         logger.info(f"Fetching URL with httpx...")
@@ -158,14 +155,7 @@ async def ingest_content(request: IngestRequest):
                 },
             )
 
-        # Step 2: Extract code blocks from RAW HTML (before cleanup)
-        # TEMPORARILY DISABLED FOR TESTING
-        # logger.info("Extracting code blocks from raw HTML...")
-        # _, code_blocks = preprocessor.extract_code_blocks(fetch_result["html"])
-        # logger.info(f"Extracted {len(code_blocks)} code blocks")
-        code_blocks = []  # Empty list - no code block preprocessing
-        
-        # Step 3: Extract with trafilatura
+        # Step 2: Extract with trafilatura
         logger.info("Extracting content with trafilatura...")
         extraction = extractor.extract_with_trafilatura(
             fetch_result["html"],
@@ -275,31 +265,21 @@ async def ingest_content(request: IngestRequest):
             title=request.title,
             blocker_flags=blocker_flags,
         )
-
-        # Step 5: Inject code blocks back into HTML BEFORE Markdown conversion
-        # TEMPORARILY DISABLED FOR TESTING
-        # logger.info(f"Injecting {len(code_blocks)} code blocks into HTML...")
-        # # Inject into whichever HTML was chosen
-        # if comparison["chosen"] == "trafilatura":
-        #     html_with_code = preprocessor.inject_code_into_html(extraction["html"], code_blocks)
-        # else:
-        #     # Also inject into readability HTML
-        #     html_with_code = preprocessor.inject_code_into_html(request.html_extension, code_blocks)
         
-        # No code block injection - use original HTML
+        # Choose HTML based on comparison result
         html_with_code = extraction["html"] if comparison["chosen"] == "trafilatura" else request.html_extension
         
-        # Step 6: Convert chosen content to Markdown
+        # Step 5: Convert chosen content to Markdown
         markdown = extractor.convert_to_markdown(
             html_with_code,
             request.title,
             url,
         )
 
-        # Step 7: Fix fragmented code blocks (line numbers, broken formatting)
+        # Step 6: Fix fragmented code blocks (line numbers, broken formatting)
         markdown = extractor.fix_fragmented_code_blocks(markdown)
 
-        # Step 8: Normalize links and clean
+        # Step 7: Normalize links and clean
         markdown = normalizer.normalize_links(markdown, url)
         markdown = extractor.clean_markdown(markdown)
 
