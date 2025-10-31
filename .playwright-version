@@ -1,0 +1,4 @@
+# Playwright cache version file
+# Update this string when you want CI to refresh the Playwright browser cache.
+# For example: v1, v2, playwright-v1.34.0
+v1

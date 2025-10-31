@@ -19,8 +19,8 @@
       "request": {
         "url": "string (HttpUrl)",
         "title": "string",
-        "html_readability": "string (Clean HTML from Readability.js)",
-        "text_readability": "string (Plain text from Readability.js)",
+        "html_extension": "string (Best extraction HTML: Schema.org > Semantic > Readability)",
+        "text_extension": "string (Best extraction text: Schema.org > Semantic > Readability)",
         "meta": {
           "captured_at": "string (ISO 8601)",
           "stats": {
@@ -38,15 +38,15 @@
       },
       "response_success": {
         "ok": true,
-        "chosen": "string (readability | trafilatura)",
+        "chosen": "string (extension | trafilatura)",
         "title": "string",
         "url": "string",
         "markdown": "string (Converted Markdown content)",
         "diagnostics": {
-          "score_readability": "number (0.0-1.0)",
+          "score_extension": "number (0.0-1.0)",
           "score_trafilatura": "number (0.0-1.0)",
           "signals": {
-            "readability": {
+            "extension": {
               "len": "number",
               "density": "number",
               "overlap": "number"
@@ -78,7 +78,7 @@
   },
   "notes": {
     "comparison_algorithm": "score = 0.35*len + 0.20*density + 0.20*overlap + 0.10*structure + 0.10*freshness + 0.05*links - blocker_penalty",
-    "tie_breaking": "If |score_A - score_B| < 0.05, prefer readability (user-visible content)",
+    "tie_breaking": "If |score_A - score_B| < 0.05, prefer extension (user-visible content)",
     "blocker_detection": "Playwright probe is headless-only, 30s timeout, no authentication",
     "markdown_conversion": "Single conversion point using markdownify in agent",
     "link_normalization": "Converts relative to absolute, strips UTM tracking parameters",

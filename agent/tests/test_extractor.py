@@ -177,3 +177,254 @@ def test_convert_handles_error_gracefully(extractor):
     
     # Should return error message, not crash
     assert "Error" in markdown or "Failed" in markdown
+
+
+def test_extract_language_from_classes_stackoverflow(extractor):
+    """Test language extraction from StackOverflow classes."""
+    from bs4 import BeautifulSoup
+    
+    # StackOverflow uses s-lang-js pattern
+    html = '<code class="s-lang-js">const x = 1;</code>'
+    soup = BeautifulSoup(html, 'html.parser')
+    code = soup.find('code')
+    
+    lang = extractor._extract_language_from_classes(code)
+    assert lang == 'javascript'
+
+
+def test_extract_language_from_classes_common_patterns(extractor):
+    """Test language extraction from common class patterns."""
+    from bs4 import BeautifulSoup
+    
+    test_cases = [
+        ('<code class="lang-python">code</code>', 'python'),
+        ('<code class="language-javascript">code</code>', 'javascript'),
+        ('<code class="hljs-typescript">code</code>', 'typescript'),
+        ('<code class="prism-bash">code</code>', 'bash'),
+        ('<pre class="lang-go">code</pre>', 'go'),
+    ]
+    
+    for html, expected_lang in test_cases:
+        soup = BeautifulSoup(html, 'html.parser')
+        elem = soup.find(['code', 'pre'])
+        lang = extractor._extract_language_from_classes(elem)
+        assert lang == expected_lang, f"Failed for {html}"
+
+
+def test_normalize_language_name(extractor):
+    """Test language name normalization."""
+    assert extractor._normalize_language_name('js') == 'javascript'
+    assert extractor._normalize_language_name('py') == 'python'
+    assert extractor._normalize_language_name('ts') == 'typescript'
+    assert extractor._normalize_language_name('sh') == 'bash'
+    assert extractor._normalize_language_name('yml') == 'yaml'
+    assert extractor._normalize_language_name('c++') == 'cpp'
+    assert extractor._normalize_language_name('c#') == 'csharp'
+    assert extractor._normalize_language_name('golang') == 'go'
+    assert extractor._normalize_language_name('rs') == 'rust'
+    assert extractor._normalize_language_name('rb') == 'ruby'
+
+
+def test_detect_language_from_code_python(extractor):
+    """Test Python language detection from code content."""
+    python_code = """
+    import os
+    from pathlib import Path
+    
+    def hello():
+        print("Hello")
+    """
+    
+    lang = extractor._detect_language_from_code(python_code)
+    assert lang == 'python'
+
+
+def test_detect_language_from_code_javascript(extractor):
+    """Test JavaScript language detection from code content."""
+    js_code = """
+    const x = 10;
+    function test() {
+        console.log("test");
+    }
+    """
+    
+    lang = extractor._detect_language_from_code(js_code)
+    assert lang == 'javascript'
+
+
+def test_detect_language_from_code_bash(extractor):
+    """Test Bash language detection from code content."""
+    bash_code = """
+    $ npm install
+    $ git commit -m "test"
+    export PATH=/usr/bin
+    """
+    
+    lang = extractor._detect_language_from_code(bash_code)
+    assert lang == 'bash'
+
+
+def test_detect_language_from_code_html(extractor):
+    """Test HTML language detection from code content."""
+    html_code = """
+    <!DOCTYPE html>
+    <html>
+    <head><title>Test</title></head>
+    <body><div>Content</div></body>
+    </html>
+    """
+    
+    lang = extractor._detect_language_from_code(html_code)
+    assert lang == 'html'
+
+
+def test_detect_language_from_code_go(extractor):
+    """Test Go language detection from code content."""
+    go_code = """
+    package main
+    
+    func main() {
+        fmt.Println("Hello")
+    }
+    """
+    
+    lang = extractor._detect_language_from_code(go_code)
+    assert lang == 'go'
+
+
+def test_detect_language_from_code_rust(extractor):
+    """Test Rust language detection from code content."""
+    rust_code = """
+    fn main() {
+        let mut x = 5;
+        println!("{}", x);
+    }
+    """
+    
+    lang = extractor._detect_language_from_code(rust_code)
+    assert lang == 'rust'
+
+
+def test_fix_fragmented_code_blocks_with_line_numbers(extractor):
+    """Test fixing fragmented inline code with line numbers."""
+    markdown = """
+Some text before
+
+`1from connectonion import Agent
+2
+3# Comment
+4agent = Agent("test")`
+
+Some text after
+"""
+    
+    fixed = extractor.fix_fragmented_code_blocks(markdown)
+    
+    # Should convert to fenced code block
+    assert '```python' in fixed or '```' in fixed
+    assert 'from connectonion import Agent' in fixed
+    assert '# Comment' in fixed
+    assert 'agent = Agent("test")' in fixed
+    # Line numbers should be stripped
+    assert '1from' not in fixed
+    assert '2\n' not in fixed or '```python\n\n' in fixed  # Allow blank line in code
+
+
+def test_fix_fragmented_code_blocks_single_line(extractor):
+    """Test fixing single-line code blocks with line numbers."""
+    markdown = '`1const x = 10;`'
+    
+    fixed = extractor.fix_fragmented_code_blocks(markdown)
+    
+    # Should convert to fenced block
+    assert '```' in fixed
+    assert 'const x = 10;' in fixed
+    assert '1const' not in fixed
+
+
+def test_fix_fragmented_code_blocks_javascript(extractor):
+    """Test JavaScript code block detection and language tagging."""
+    markdown = """
+`1function test() {
+2  console.log("hello");
+3}`
+"""
+    
+    fixed = extractor.fix_fragmented_code_blocks(markdown)
+    
+    assert '```javascript' in fixed
+    assert 'function test()' in fixed
+    assert 'console.log("hello")' in fixed
+
+
+def test_convert_to_markdown_preserves_language_from_classes(extractor):
+    """Test that language info from HTML classes is preserved in Markdown."""
+    html = """
+    <pre><code class="lang-python">
+def hello():
+    print("world")
+    </code></pre>
+    """
+    
+    markdown = extractor.convert_to_markdown(html, "Test", "https://example.com", False)
+    
+    # Should have fenced code block with language
+    assert '```python' in markdown
+    assert 'def hello():' in markdown
+    assert 'print("world")' in markdown
+
+
+def test_convert_to_markdown_stackoverflow_code_blocks(extractor):
+    """Test conversion of StackOverflow-style code blocks."""
+    html = """
+    <pre><code class="s-lang-js">
+const x = 10;
+function test() {
+    return x;
+}
+    </code></pre>
+    """
+    
+    markdown = extractor.convert_to_markdown(html, "Test", "https://example.com", False)
+    
+    assert '```javascript' in markdown
+    assert 'const x = 10;' in markdown
+    assert 'function test()' in markdown
+
+
+def test_convert_to_markdown_multiple_code_blocks(extractor):
+    """Test conversion with multiple code blocks with different languages."""
+    html = """
+    <div>
+        <pre><code class="lang-python">print("hello")</code></pre>
+        <p>Some text</p>
+        <pre><code class="lang-javascript">console.log("world");</code></pre>
+    </div>
+    """
+    
+    markdown = extractor.convert_to_markdown(html, "Test", "https://example.com", False)
+    
+    assert '```python' in markdown
+    assert 'print("hello")' in markdown
+    assert '```javascript' in markdown
+    assert 'console.log("world")' in markdown
+
+
+def test_fix_fragmented_code_blocks_no_line_numbers(extractor):
+    """Test that code without line numbers is left unchanged."""
+    markdown = """
+Some normal text with `inline code` that should stay.
+
+```python
+# Already a proper code block
+def test():
+    pass
+```
+"""
+    
+    fixed = extractor.fix_fragmented_code_blocks(markdown)
+    
+    # Should not break existing code
+    assert '`inline code`' in fixed
+    assert '```python' in fixed
+    assert 'def test():' in fixed
