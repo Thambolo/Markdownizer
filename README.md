@@ -16,7 +16,7 @@ AI-powered Web → Markdown conversion. A local browser extension captures user-
 
 ## Key features
 
-- Smart extraction (browser Readability vs agent trafilatura)
+- Smart extraction (browser extension vs agent trafilatura)
 - Auth‑aware capture (works with pages you can see in the browser)
 - Blocker detection (paywall/login/captcha detection, no bypass)
 - Code block preservation and language hints
@@ -76,7 +76,6 @@ uvicorn main:app --reload --port 5050
 ## Where to find more details
 
 - Decision algorithm & scoring: `docs/algorithm.md`
-- Code block handling and preprocessing: `docs/preprocessor.md`
 - Architecture & flow: `docs/architecture.md`
 - Troubleshooting and FAQ: `docs/FAQ.md`
 - Tests: `docs/TESTS.md`
